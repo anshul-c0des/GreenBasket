@@ -5,11 +5,14 @@ import connectDB from './configs/db.js';
 import 'dotenv/config'
 import userRouter from './routes/UserRoute.js';
 import sellerRouter from './routes/sellerRoute.js';
+import connectCloudinary from './configs/cloudinary.js';
+import productRouter from './routes/productRoute.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
 
-await connectDB();
+await connectDB();  // connects to mongodb
+await connectCloudinary();  // connects to cloudinary
 
 //Allowed Origins
 const allowedOrigins = ['http://localhost:5174']
@@ -22,6 +25,7 @@ app.use(cors({origin: allowedOrigins, credentials: true}));
 app.get('/', (req, res)=> res.send('API Working'));
 app.use('/api/user', userRouter)   //User Routes
 app.use('/api/seller', sellerRouter)   //Seller Routes
+app.use('/api/product', productRouter)  //Product Routes
 
 app.listen(port, ()=>{
     console.log(`Server is running on http://localhost:${port}`)

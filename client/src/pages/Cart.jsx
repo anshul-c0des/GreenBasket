@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react"
 import { useAppContext } from "../context/AppContext"
 import { assets, dummyAddress } from "../assets/assets";
+import toast from "react-hot-toast";
 
 const Cart = () => {
-    const {products, currency, cartItems, removeFromCart, updateCartItems, getCartCount, getCartAmount, navigate } = useAppContext(); 
+    const {products, currency, cartItems, removeFromCart, updateCartItems, getCartCount, getCartAmount, navigate, axios, user, setCartItems } = useAppContext(); 
 
     const [showAddress, setShowAddress] = useState(false)
     const [cartArray, setCartArray] = useState([])
-    const [addresses, setAddresses] = useState(dummyAddress);
-    const [selectedAddress , setselectedAddress ] = useState(dummyAddress[0]);
+    const [addresses, setAddresses] = useState([]);
+    const [selectedAddress , setselectedAddress ] = useState(null);
     const [paymentOption, setPaymentOption] = useState('COD');
 
     const getCart = ()=>{  //get items in cart
@@ -21,14 +22,59 @@ const Cart = () => {
         setCartArray(tempArray)
     }
     const placeOrder = async ()=>{
+        try {
+            if(!selectedAddress){
+                return toast.error("Please select an address")
+            }
 
+            //COD
+            if(paymentOption==='COD'){
+                const {data} = await axios.post('/api/order/cod', {
+                    userId: user._id,
+                    items: cartArray.map(item=> ({product: item._id, quantity: item.quantity})),
+                    address: selectedAddress._id
+                })
+                if(data.success){
+                    toast.success(data.message)
+                    setCartItems({})
+                    navigate('/my-orders')
+                }else{
+                    toast.error(data.message)
+                }
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
     }
+    const getUserAddress = async () => {
+        try {
+            const { data } = await axios.get('/api/address/get');
+            if (data.success) {
+                setAddresses(data.address); 
+                if (data.address.length > 0) {
+                    setselectedAddress(data.address[0]);
+                } else {
+                    toast.error('No addresses found');
+                }
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+    
 
     useEffect(() => {
       if(products.length>0 && cartItems){
         getCart()
       }
     }, [products, cartItems])
+    useEffect(()=>{
+        if(user){
+            getUserAddress()
+        }
+    },[user])
 
     
     return products.length>0 && cartItems ? (
@@ -93,7 +139,7 @@ const Cart = () => {
                         {showAddress && (
                             <div className="absolute top-12 py-1 bg-white border border-gray-300 text-sm w-full">
                                 {addresses.map((address, index)=>(
-                                    <p onClick={() => {setselectedAddress(address); setShowAddress(false)}} className="text-gray-500 p-2 hover:bg-gray-100">
+                                    <p key={index} onClick={() => {setselectedAddress(address); setShowAddress(false)}} className="text-gray-500 p-2 hover:bg-gray-100">
                                         {address.street}, {address.city}, {address.state}, {address.country} 
                                     </p>
                                 ))}

@@ -19,7 +19,7 @@ await connectDB();  // connects to mongodb
 await connectCloudinary();  // connects to cloudinary
 
 //Allowed Origins
-const allowedOrigins = ['http://localhost:5174'] 
+const allowedOrigins = ['http://localhost:5174', 'https://greenbasket-frontend.vercel.app'] 
 
 app.post('/stripe', express.raw({type: 'application/json'}), stripeWebhooks)
 
